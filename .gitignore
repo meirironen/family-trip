@@ -1,0 +1,11 @@
+node_modules
+dist
+.vercel
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# app-saved copies that may contain secrets
+Claude outputs/
+env.local
