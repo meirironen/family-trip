@@ -1,7 +1,17 @@
+import { useEffect, useState } from 'react';
 import PlaceCard from './PlaceCard.tsx';
-import { resolvePlace, routeUrl, type TripState } from '../lib/state.ts';
+import {
+  DAY_NOTE_MAX,
+  dayNote,
+  hotelOf,
+  hotels,
+  mapsUrl,
+  resolvePlace,
+  routeUrl,
+  type TripState,
+} from '../lib/state.ts';
 import type { DragState, DropTarget } from '../lib/useDragDrop.ts';
-import { POOL, type Area, type AreaId, type ColumnDef, type ColumnId, type PlaceId } from '../trip.ts';
+import { POOL, TYPES, type Area, type AreaId, type ColumnDef, type ColumnId, type PlaceId } from '../trip.ts';
 
 interface Props {
   column: ColumnDef;
@@ -17,6 +27,8 @@ interface Props {
   /** Which area this day is based in, and how to change it. */
   dayArea?: AreaId | undefined;
   onSetDayArea?: (day: ColumnId, area: AreaId | null) => void;
+  onSetDayNote?: (day: ColumnId, note: string) => void;
+  onSetDayHotel?: (day: ColumnId, id: PlaceId | null) => void;
 }
 
 export default function Column({
@@ -32,6 +44,8 @@ export default function Column({
   onToggleDone,
   dayArea,
   onSetDayArea,
+  onSetDayNote,
+  onSetDayHotel,
 }: Props) {
   const ids = state.order[column.id] ?? [];
   const route = routeUrl(state, column.id);
@@ -44,6 +58,9 @@ export default function Column({
 
   const isDay = column.id !== POOL;
   const chosen = dayArea ? areas[dayArea] : undefined;
+  const note = isDay ? dayNote(state, column.id) : '';
+  const hotel = isDay ? hotelOf(state, column.id) : null;
+  const hotelOptions = isDay ? hotels(state) : [];
 
   return (
     <section className={className}>
@@ -60,7 +77,7 @@ export default function Column({
             {isToday && <span className="badge">היום</span>}
           </h2>
           <p className="column__sub">
-            {column.note ? `${column.note} · ` : ''}
+            {note ? `${note} · ` : ''}
             {ids.length} מקומות
             {doneCount > 0 && ` · ${doneCount} בוצעו`}
           </p>
@@ -72,6 +89,45 @@ export default function Column({
           </a>
         )}
       </header>
+
+      {isDay && onSetDayNote && (
+        <DayNoteInput
+          value={note}
+          label={`תיאור ${column.title}`}
+          onSave={(next) => onSetDayNote(column.id, next)}
+        />
+      )}
+
+      {isDay && onSetDayHotel && (
+        <div className="column__hotel">
+          <span className="column__hotel-icon" aria-hidden="true">
+            {TYPES.hotel.icon}
+          </span>
+          <select
+            aria-label={`מלון של ${column.title}`}
+            value={hotel?.id ?? ''}
+            onChange={(e) => onSetDayHotel(column.id, e.target.value === '' ? null : e.target.value)}
+          >
+            <option value="">אין מלון</option>
+            {hotelOptions.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.he}
+              </option>
+            ))}
+          </select>
+          {hotel && (
+            <a
+              className="column__hotel-link"
+              href={mapsUrl(hotel)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${hotel.he} ב-Google Maps`}
+            >
+              ↗
+            </a>
+          )}
+        </div>
+      )}
 
       {isDay && onSetDayArea && (
         <div className="column__area">
@@ -123,3 +179,51 @@ export default function Column({
     </section>
   );
 }
+
+/** Local draft so we don't save on every keystroke. */
+function DayNoteInput({
+  value,
+  label,
+  onSave,
+}: {
+  value: string;
+  label: string;
+  onSave: (note: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  const commit = () => {
+    const next = draft.trim();
+    if (next === value) {
+      setDraft(value);
+      return;
+    }
+    onSave(next);
+  };
+
+  return (
+    <div className="column__note">
+      <input
+        type="text"
+        aria-label={label}
+        placeholder="תיאור היום"
+        maxLength={DAY_NOTE_MAX}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') {
+            setDraft(value);
+            e.currentTarget.blur();
+          }
+        }}
+      />
+    </div>
+  );
+}
+

@@ -4,6 +4,7 @@
  */
 import {
   COLUMN_IDS,
+  DAYS,
   DEFAULT_AREAS,
   FALLBACK_COLOR,
   PLACES,
@@ -29,6 +30,10 @@ export interface TripState {
   areas: Record<AreaId, Area>;
   /** Which area each day is based in. Days start unset, hence Partial. */
   dayAreas: Partial<Record<ColumnId, AreaId>>;
+  /** Per-day description overrides. Missing keys fall back to trip.ts. */
+  dayNotes: Partial<Record<ColumnId, string>>;
+  /** Where the group sleeps that night — points at a place of type 'hotel'. */
+  dayHotels: Partial<Record<ColumnId, PlaceId>>;
 }
 
 export function emptyState(): TripState {
@@ -45,8 +50,13 @@ export function emptyState(): TripState {
     done: {},
     areas: { ...DEFAULT_AREAS },
     dayAreas: {},
+    dayNotes: {},
+    dayHotels: {},
   };
 }
+
+/** Longest day description we keep. */
+export const DAY_NOTE_MAX = 120;
 
 /**
  * Repairs anything missing, duplicated or stale so the UI never sees a
@@ -63,6 +73,8 @@ export function normalize(input: unknown): TripState {
     done: isRecord(s.done) ? (s.done as TripState['done']) : {},
     areas: readAreas(s.areas),
     dayAreas: {},
+    dayNotes: {},
+    dayHotels: {},
   };
 
   // keep only day→area pairs that still point at a real day and a real area
@@ -71,6 +83,13 @@ export function normalize(input: unknown): TripState {
       if (COLUMN_IDS.includes(day as ColumnId) && isId(area) && area in out.areas) {
         out.dayAreas[day as ColumnId] = area;
       }
+    }
+  }
+
+  if (isRecord(s.dayNotes)) {
+    for (const [day, note] of Object.entries(s.dayNotes)) {
+      if (day === POOL || !COLUMN_IDS.includes(day as ColumnId) || typeof note !== 'string') continue;
+      out.dayNotes[day as ColumnId] = note.trim().slice(0, DAY_NOTE_MAX);
     }
   }
 
@@ -91,6 +110,16 @@ export function normalize(input: unknown): TripState {
   for (const p of allPlaces(out)) {
     if (!seen.has(p.id)) out.order[POOL].push(p.id);
   }
+
+  // keep only day→hotel pairs whose target still exists and is still a hotel
+  if (isRecord(s.dayHotels)) {
+    for (const [day, id] of Object.entries(s.dayHotels)) {
+      if (day === POOL || !COLUMN_IDS.includes(day as ColumnId) || !isId(id)) continue;
+      const place = resolvePlace(out, id);
+      if (place?.type === 'hotel') out.dayHotels[day as ColumnId] = id;
+    }
+  }
+
   return out;
 }
 
@@ -185,6 +214,53 @@ export function newPlace(): Place {
 }
 
 // ---------- areas ----------
+
+/** The day's description: a saved edit, otherwise the seed in trip.ts. */
+export function dayNote(state: TripState, day: ColumnId): string {
+  const stored = state.dayNotes[day];
+  if (stored !== undefined) return stored;
+  return DAYS.find((d) => d.id === day)?.note ?? '';
+}
+
+/** Sets the day's description. An empty string clears it. */
+export function setDayNote(state: TripState, day: ColumnId, note: string): TripState {
+  if (day === POOL || !COLUMN_IDS.includes(day)) return state;
+
+  const next = note.trim().slice(0, DAY_NOTE_MAX);
+  if (state.dayNotes[day] === next) return state;
+
+  return { ...state, dayNotes: { ...state.dayNotes, [day]: next } };
+}
+
+/** The hotel a day is pinned to, resolved through `meta` — null when unset. */
+export function hotelOf(state: TripState, day: ColumnId): Place | null {
+  const id = state.dayHotels[day];
+  if (!id) return null;
+  const place = resolvePlace(state, id);
+  return place?.type === 'hotel' ? place : null;
+}
+
+/** Every place currently typed as a hotel — the pool the picker draws from. */
+export function hotels(state: TripState): Place[] {
+  return allPlaces(state)
+    .map((p) => resolvePlace(state, p.id))
+    .filter((p): p is Place => p !== null && p.type === 'hotel');
+}
+
+/** Sets (or with null, clears) the hotel for a day. */
+export function setDayHotel(state: TripState, day: ColumnId, id: PlaceId | null): TripState {
+  if (day === POOL || !COLUMN_IDS.includes(day)) return state;
+
+  const dayHotels = { ...state.dayHotels };
+  if (id === null) {
+    delete dayHotels[day];
+  } else {
+    const place = resolvePlace(state, id);
+    if (place?.type !== 'hotel') return state;
+    dayHotels[day] = id;
+  }
+  return { ...state, dayHotels };
+}
 
 /** Sets (or with null, clears) the area a day is based in. */
 export function setDayArea(state: TripState, day: ColumnId, area: AreaId | null): TripState {

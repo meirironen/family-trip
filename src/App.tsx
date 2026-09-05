@@ -25,6 +25,8 @@ import {
   removePlace,
   resolvePlace,
   setDayArea,
+  setDayHotel,
+  setDayNote,
   toggleDone,
   updateArea,
   updateMeta,
@@ -140,6 +142,8 @@ export default function App() {
     onToggleCollapse: toggleCollapse,
     onToggleDone: (id: PlaceId) => update((s) => toggleDone(s, id)),
     onSetDayArea: (day: ColumnId, area: string | null) => update((s) => setDayArea(s, day, area)),
+    onSetDayNote: (day: ColumnId, note: string) => update((s) => setDayNote(s, day, note)),
+    onSetDayHotel: (day: ColumnId, id: PlaceId | null) => update((s) => setDayHotel(s, day, id)),
   };
 
   return (

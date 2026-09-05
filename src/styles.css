@@ -356,6 +356,66 @@ body {
   border-color: var(--line);
 }
 
+.column__note {
+  padding: 0 12px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.column__note input {
+  width: 100%;
+  padding: 3px 4px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.column__note input::placeholder {
+  color: var(--muted);
+}
+.column__note input:hover,
+.column__note input:focus {
+  border-color: var(--line);
+  outline: none;
+}
+
+.column__hotel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.column__hotel-icon {
+  flex: none;
+  font-size: 13px;
+  line-height: 1;
+}
+.column__hotel select {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 4px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.column__hotel select:hover,
+.column__hotel select:focus {
+  color: var(--ink);
+  border-color: var(--line);
+}
+.column__hotel-link {
+  flex: none;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
 /* ---------- card ---------- */
 .card {
   position: relative;
@@ -812,11 +872,17 @@ body {
   .column__head {
     padding: 11px 13px;
   }
-  .column__area {
+  .column__area,
+  .column__hotel {
     padding: 8px 13px;
   }
-  .column__area select {
+  .column__area select,
+  .column__hotel select,
+  .column__note input {
     font-size: 16px; /* iOS zooms in on anything smaller */
+  }
+  .column__note {
+    padding: 0 13px 8px;
   }
   .field input,
   .field select,

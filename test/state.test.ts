@@ -5,8 +5,13 @@ import {
   addPlace,
   areaOf,
   countInArea,
+  dayNote,
+  hotelOf,
+  hotels,
   removeArea,
   setDayArea,
+  setDayHotel,
+  setDayNote,
   updateArea,
   columnOf,
   emptyState,
@@ -21,7 +26,7 @@ import {
   toggleDone,
   updateMeta,
 } from '../src/lib/state.ts';
-import { COLUMN_IDS, DEFAULT_AREAS, FALLBACK_COLOR, PLACES, POOL } from '../src/trip.ts';
+import { COLUMN_IDS, DAYS, DEFAULT_AREAS, FALLBACK_COLOR, PLACES, POOL } from '../src/trip.ts';
 
 // Tests work off whatever trip.ts holds, so re-importing the place list
 // from Google Maps never breaks them.
@@ -236,4 +241,111 @@ test('normalize drops day areas that no longer resolve', () => {
   assert.equal(s.dayAreas.d1, 'garda');
   assert.equal(s.dayAreas.d2, undefined, 'unknown area dropped');
   assert.equal((s.dayAreas as Record<string, string>).nope, undefined, 'unknown day dropped');
+});
+
+
+// ---------- notes per day ----------
+
+test('days start with the seed description from trip.ts', () => {
+  const s = emptyState();
+  assert.equal(dayNote(s, 'd1'), DAYS[0].note);
+  assert.deepEqual(s.dayNotes, {});
+});
+
+test('a day description can be edited and cleared', () => {
+  let s = setDayNote(emptyState(), 'd2', '  יום באגם  ');
+  assert.equal(s.dayNotes.d2, 'יום באגם');
+  assert.equal(dayNote(s, 'd2'), 'יום באגם');
+
+  s = setDayNote(s, 'd2', '   ');
+  assert.equal(dayNote(s, 'd2'), '');
+});
+
+test('setDayNote rejects the pool and an unknown day', () => {
+  const s = emptyState();
+  assert.equal(setDayNote(s, POOL, 'לא'), s);
+  assert.equal(setDayNote(s, 'nope' as 'd1', 'לא'), s);
+});
+
+test('normalize keeps real day notes and drops the rest', () => {
+  const s = normalize({
+    dayNotes: { d1: '  נחיתה  ', d2: 12, pool: 'לא', nope: 'גם לא' },
+  });
+  assert.equal(s.dayNotes.d1, 'נחיתה');
+  assert.equal(s.dayNotes.d2, undefined);
+  assert.equal(s.dayNotes.pool, undefined);
+  assert.equal((s.dayNotes as Record<string, string>).nope, undefined);
+});
+
+test('day notes survive a JSON round trip (the shape stored in Redis)', () => {
+  const edited = setDayNote(emptyState(), 'd4', 'סנפלינג בקניון');
+  const restored = normalize(JSON.parse(JSON.stringify(edited)));
+  assert.equal(restored.dayNotes.d4, 'סנפלינג בקניון');
+  assert.equal(dayNote(restored, 'd4'), 'סנפלינג בקניון');
+});
+
+
+// ---------- hotel per day ----------
+
+const HOTEL = PLACES.find((p) => p.type === 'hotel')!;
+
+test('hotels() returns every place currently typed as a hotel', () => {
+  const s = emptyState();
+  const list = hotels(s);
+  assert.ok(list.some((p) => p.id === HOTEL.id));
+  assert.ok(list.every((p) => p.type === 'hotel'));
+});
+
+test('a day starts with no hotel; setDayHotel pins and clears it', () => {
+  let s = emptyState();
+  assert.equal(hotelOf(s, 'd5'), null);
+
+  s = setDayHotel(s, 'd5', HOTEL.id);
+  assert.equal(hotelOf(s, 'd5')?.id, HOTEL.id);
+
+  s = setDayHotel(s, 'd5', null);
+  assert.equal(hotelOf(s, 'd5'), null);
+});
+
+test('setDayHotel rejects the pool, unknown day, non-hotel place and unknown place', () => {
+  const s = emptyState();
+  const nonHotel = PLACES.find((p) => p.type !== 'hotel')!;
+  assert.equal(setDayHotel(s, POOL, HOTEL.id), s);
+  assert.equal(setDayHotel(s, 'nope' as 'd1', HOTEL.id), s);
+  assert.equal(setDayHotel(s, 'd1', nonHotel.id), s);
+  assert.equal(setDayHotel(s, 'd1', 'ghost-id'), s);
+});
+
+test('normalize drops a day hotel whose place is gone or no longer a hotel', () => {
+  const nonHotel = PLACES.find((p) => p.type !== 'hotel')!;
+  const s = normalize({
+    dayHotels: {
+      d1: HOTEL.id,      // fine
+      d2: nonHotel.id,   // wrong type — drop
+      d3: 'ghost',       // unknown — drop
+      pool: HOTEL.id,    // pool — drop
+      nope: HOTEL.id,    // unknown day — drop
+    },
+  });
+  assert.equal(s.dayHotels.d1, HOTEL.id);
+  assert.equal(s.dayHotels.d2, undefined);
+  assert.equal(s.dayHotels.d3, undefined);
+  assert.equal((s.dayHotels as Record<string, string>).pool, undefined);
+  assert.equal((s.dayHotels as Record<string, string>).nope, undefined);
+});
+
+test('changing a place away from type:hotel clears any day that pinned it', () => {
+  let s = setDayHotel(emptyState(), 'd7', HOTEL.id);
+  s = updateMeta(s, HOTEL.id, { type: 'attraction' });
+
+  const restored = normalize(JSON.parse(JSON.stringify(s)));
+  assert.equal(restored.dayHotels.d7, undefined, 'stale pointer cleaned on load');
+  assert.equal(hotelOf(restored, 'd7'), null);
+});
+
+test('day hotels survive a JSON round trip (the shape stored in Redis)', () => {
+  const s = setDayHotel(emptyState(), 'd6', HOTEL.id);
+  const restored = normalize(JSON.parse(JSON.stringify(s)));
+  assert.equal(restored.dayHotels.d6, HOTEL.id);
+  assert.equal(hotelOf(restored, 'd6')?.id, HOTEL.id);
 });
