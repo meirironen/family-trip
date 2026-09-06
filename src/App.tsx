@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DayRoute from './components/DayRoute.tsx';
+import SavedPlacesDialog from './components/SavedPlacesDialog.tsx';
 import Header from './components/Header.tsx';
 import Column from './components/Column.tsx';
 import DayTabs from './components/DayTabs.tsx';
@@ -38,7 +39,6 @@ import { useDragDrop, type DragState } from './lib/useDragDrop.ts';
 import { MOBILE_QUERY, useMediaQuery } from './lib/useMediaQuery.ts';
 
 const COLLAPSE_KEY = 'family-trip:collapsed';
-const POOL_OPEN_KEY = 'family-trip:pool-open';
 
 type Overlay = 'menu' | 'areas' | null;
 
@@ -60,8 +60,7 @@ export default function App() {
   const [overview, setOverview] = useState(false);
   const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => readJson(COLLAPSE_KEY, {}));
-  // desktop: the unassigned rail is closed until you ask for it
-  const [poolOpen, setPoolOpen] = useState<boolean>(() => readJson(POOL_OPEN_KEY, true));
+  const [poolOpen, setPoolOpen] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -98,14 +97,20 @@ export default function App() {
       return next;
     });
 
-  const togglePool = () =>
-    setPoolOpen((open) => {
-      writeJson(POOL_OPEN_KEY, !open);
-      return !open;
-    });
+  const togglePool = () => setPoolOpen((open) => !open);
+
+  const selectColumn = (id: ColumnId) => {
+    if (!isMobile && id === POOL) {
+      setPoolOpen(true);
+      return;
+    }
+    setActiveCol(id);
+    setOverview(false);
+  };
 
   const openEditor = (id: PlaceId) => {
     if (justDragged()) return;
+    setPoolOpen(false);
     setEditing(id);
   };
 
@@ -171,25 +176,14 @@ export default function App() {
       />
 
       <div className="trip-navigation">
-        <DayTabs state={state} active={overview ? null : activeCol} today={today} onSelect={(id) => { setActiveCol(id); setOverview(false); }} />
+        <DayTabs state={state} active={overview ? null : activeCol} today={today} onSelect={selectColumn} />
         <button className={`btn${overview ? ' btn--primary' : ''}`} aria-pressed={overview} onClick={() => setOverview((v) => !v)}>מבט על הטיול</button>
       </div>
       <div className="view-heading"><div><p className="eyebrow">צפון איטליה · 22–30 בספטמבר</p><h2>{overview ? 'כל הטיול, במקום אחד' : activeCol === POOL ? 'רעיונות לטיול' : 'היום שלכם, בקצב שלכם'}</h2></div>
-        <button className="btn" onClick={() => { setActiveCol(POOL); setOverview(false); }}>מקומות שמורים · {state.order[POOL].length}</button>
+        <button className="btn" onClick={() => selectColumn(POOL)}>מקומות שמורים · {state.order[POOL].length}</button>
       </div>
 
       <div className={`workspace${!overview ? ' workspace--focused' : ''}`}>
-        {!isMobile && poolOpen && activeCol !== POOL && (
-          <aside className="pool-rail">
-            <div className="saved-panel">
-              <h2>מקומות שמורים</h2><p>רעיונות שמחכים ליום המתאים</p>
-              <input className="saved-search" aria-label="חיפוש במקומות שמורים" placeholder="חיפוש מקום…" value={search} onChange={(e) => setSearch(e.target.value)} />
-              <button className="btn" onClick={() => setOverlay('menu')}>סינון לפי אזור וסוג</button>
-              <Column {...columnProps} state={saved} column={poolColumn} isToday={false} collapsed={false} addToDay={!overview ? activeCol : undefined} />
-            </div>
-          </aside>
-        )}
-
         <main className={`board${!overview ? ' board--focused' : ''}`}>
           {!overview && activeCol === POOL && <div className="saved-toolbar"><input className="saved-search" aria-label="חיפוש במקומות שמורים" placeholder="חיפוש מקום…" value={search} onChange={(e) => setSearch(e.target.value)} /><button className="btn" onClick={() => setOverlay('menu')}>סינון לפי אזור וסוג</button></div>}
           {boardColumns.map((column) => (
@@ -207,6 +201,14 @@ export default function App() {
           ))}
         </main>
       </div>
+
+      {!isMobile && poolOpen && <SavedPlacesDialog onClose={() => setPoolOpen(false)}>
+        <div className="saved-panel">
+          <input className="saved-search" aria-label="חיפוש במקומות שמורים" placeholder="חיפוש מקום…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <button className="btn" onClick={() => { setPoolOpen(false); setOverlay('menu'); }}>סינון לפי אזור וסוג</button>
+          <Column {...columnProps} state={saved} column={poolColumn} isToday={false} collapsed={false} addToDay={!overview && activeCol !== POOL ? activeCol : undefined} />
+        </div>
+      </SavedPlacesDialog>}
 
       {isMobile && (
         <button type="button" className="fab" aria-label="הוספת מקום" onClick={startNewPlace}>
