@@ -7,7 +7,6 @@ import {
   hotels,
   mapsUrl,
   resolvePlace,
-  routeUrl,
   type TripState,
 } from '../lib/state.ts';
 import type { DragState, DropTarget } from '../lib/useDragDrop.ts';
@@ -22,6 +21,7 @@ interface Props {
   onToggleCollapse: (id: ColumnId) => void;
   dragging: DragState | null;
   target: DropTarget | null;
+  onRoute: (id: ColumnId) => void;
   onOpen: (id: PlaceId) => void;
   onToggleDone: (id: PlaceId) => void;
   /** Which area this day is based in, and how to change it. */
@@ -41,6 +41,7 @@ export default function Column({
   dragging,
   target,
   onOpen,
+  onRoute,
   onToggleDone,
   dayArea,
   onSetDayArea,
@@ -48,11 +49,10 @@ export default function Column({
   onSetDayHotel,
 }: Props) {
   const ids = state.order[column.id] ?? [];
-  const route = routeUrl(state, column.id);
   const doneCount = ids.filter((id) => state.done[id]).length;
   const dropAt = target?.col === column.id ? target.index : null;
 
-  const className = ['column', column.id === POOL && 'column--pool', isToday && 'column--today']
+  const className = ['column', column.id === POOL && 'column--pool', isToday && 'column--today', target?.col === column.id && 'column--drop-target']
     .filter(Boolean)
     .join(' ');
 
@@ -63,7 +63,7 @@ export default function Column({
   const hotelOptions = isDay ? hotels(state) : [];
 
   return (
-    <section className={className}>
+    <section className={className} data-col={column.id} data-drop-count={ids.filter((id) => id !== dragging?.id).length}>
       <header className="column__head">
         <button
           type="button"
@@ -83,10 +83,10 @@ export default function Column({
           </p>
         </button>
 
-        {route && (
-          <a className="column__route" href={route} target="_blank" rel="noopener noreferrer">
-            מסלול נסיעה ↗
-          </a>
+        {isDay && (
+          <button type="button" className="column__route" onClick={() => onRoute(column.id)}>
+            מסלול יומי ↗
+          </button>
         )}
       </header>
 
@@ -152,7 +152,7 @@ export default function Column({
       )}
 
       {!collapsed && (
-        <div className="column__list" data-col={column.id}>
+        <div className="column__list" data-drop-list>
           {ids.length === 0 && dropAt === null && <p className="column__empty">גררו לכאן</p>}
 
           {ids.map((id, i) => {

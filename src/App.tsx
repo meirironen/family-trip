@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import DayRoute from './components/DayRoute.tsx';
 import Header from './components/Header.tsx';
 import Column from './components/Column.tsx';
 import DayTabs from './components/DayTabs.tsx';
@@ -51,6 +52,7 @@ export default function App() {
   const { state, status, update } = useTripState();
   const isMobile = useMediaQuery(MOBILE_QUERY);
 
+  const [routeDay, setRouteDay] = useState<ColumnId | null>(null);
   const [editing, setEditing] = useState<PlaceId | null>(null);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [filter, setFilter] = useState<FilterState>({ area: null, type: null });
@@ -139,6 +141,7 @@ export default function App() {
     dragging,
     target,
     onOpen: openEditor,
+    onRoute: setRouteDay,
     onToggleCollapse: toggleCollapse,
     onToggleDone: (id: PlaceId) => update((s) => toggleDone(s, id)),
     onSetDayArea: (day: ColumnId, area: string | null) => update((s) => setDayArea(s, day, area)),
@@ -191,6 +194,8 @@ export default function App() {
       )}
 
       {dragging && <DragGhost state={state} drag={dragging} />}
+
+      {routeDay && <DayRoute state={state} column={COLUMNS.find((c) => c.id === routeDay)!} onClose={() => setRouteDay(null)} />}
 
       {overlay === 'menu' && (
         <MenuSheet

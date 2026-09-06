@@ -243,6 +243,10 @@ body {
   border-style: dashed;
   box-shadow: none;
 }
+.column--drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .column--today {
   border-color: var(--accent);
 }
@@ -919,3 +923,25 @@ body {
     break-inside: avoid;
   }
 }
+
+.column__route {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.day-route {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.day-route::backdrop { background: rgb(0 0 0 / 40%); }
+.day-route__body { padding: 22px; }
+.day-route__stops { padding-inline-start: 24px; line-height: 1.9; }
+.day-route__links { display: flex; flex-direction: column; gap: 10px; }

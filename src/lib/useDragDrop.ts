@@ -39,7 +39,7 @@ type Armed = { id: PlaceId; x: number; y: number; rect: DOMRect };
  * {col, index} and let React render a drop indicator. The move is committed
  * once, on release.
  *
- * Cards must carry `data-place="<id>"`; each column's list `data-col="<id>"`.
+ * Cards must carry `data-place="<id>"`; each column `data-col="<id>"`, and its list `data-drop-list`.
  */
 export function useDragDrop(onDrop: (id: PlaceId, col: ColumnId, index: number) => void): DragDrop {
   const [drag, setDrag] = useState<DragState | null>(null);
@@ -173,10 +173,15 @@ function cardFrom(node: EventTarget | null): HTMLElement | null {
 }
 
 /** Which list, and at which index, is under the pointer. */
-function hitTest(x: number, y: number, draggedId: PlaceId | undefined): DropTarget | null {
+export function hitTest(x: number, y: number, draggedId: PlaceId | undefined): DropTarget | null {
   const el = document.elementFromPoint(x, y);
   const list = el?.closest<HTMLElement>('[data-col]');
   if (!list?.dataset.col) return null;
+
+  // A collapsed column has no rendered cards; append to its stored order.
+  if (!list.querySelector('[data-drop-list]')) {
+    return { col: list.dataset.col as ColumnId, index: Number(list.dataset.dropCount) || 0 };
+  }
 
   const cards = [...list.querySelectorAll<HTMLElement>('[data-place]')].filter(
     (c) => c.dataset.place !== draggedId
@@ -197,7 +202,7 @@ function autoscroll(x: number, y: number): void {
   if (y < EDGE) window.scrollBy(0, -SCROLL_STEP);
   else if (y > window.innerHeight - EDGE) window.scrollBy(0, SCROLL_STEP);
 
-  const list = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-col]');
+  const list = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-col]')?.querySelector<HTMLElement>('[data-drop-list]');
   if (list && list.scrollHeight > list.clientHeight + 4) {
     const r = list.getBoundingClientRect();
     if (y < r.top + 34) list.scrollTop -= SCROLL_STEP;
