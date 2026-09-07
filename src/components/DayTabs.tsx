@@ -15,7 +15,7 @@ interface Props {
 export default function DayTabs({ state, active, today, onSelect }: Props) {
   return (
     <nav className="daytabs" aria-label="ימי הטיול">
-      {COLUMNS.map((column) => {
+      {COLUMNS.filter((column) => column.id !== POOL).map((column) => {
         const ids = state.order[column.id] ?? [];
         const done = ids.filter((id) => state.done[id]).length;
         const isActive = column.id === active;
@@ -26,8 +26,6 @@ export default function DayTabs({ state, active, today, onSelect }: Props) {
             type="button"
             className={`daytab${isActive ? ' daytab--on' : ''}${column.id === today ? ' daytab--today' : ''}`}
             aria-current={isActive ? 'true' : undefined}
-            aria-haspopup={column.id === POOL ? 'dialog' : undefined}
-            aria-controls={column.id === POOL ? 'pool-modal' : undefined}
             onClick={() => onSelect(column.id)}
           >
             <span className="daytab__label">{column.title}</span>

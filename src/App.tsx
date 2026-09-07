@@ -171,7 +171,7 @@ export default function App() {
         onInstall={install}
       />
 
-      {isMobile && <DayTabs state={shown} active={activeCol} today={today} onSelect={(col) => col === POOL ? setPoolOpen(true) : setActiveCol(col)} />}
+      {isMobile && <DayTabs state={shown} active={activeCol} today={today} onSelect={setActiveCol} />}
 
       <div className="workspace">
         <main className={`board${isMobile ? ' board--single' : ''}`}>
