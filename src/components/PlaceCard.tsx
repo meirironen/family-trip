@@ -7,11 +7,12 @@ interface Props {
   areas: Record<AreaId, Area>;
   done: boolean;
   dragging: boolean;
+  draggable?: boolean;
   onOpen: (id: PlaceId) => void;
   onToggleDone: (id: PlaceId) => void;
 }
 
-export default function PlaceCard({ place, areas, done, dragging, onOpen, onToggleDone }: Props) {
+export default function PlaceCard({ place, areas, done, dragging, draggable = true, onOpen, onToggleDone }: Props) {
   const type = TYPES[place.type];
   // the area may have been deleted by someone else since this place was filed
   const area = areas[place.area];
@@ -20,7 +21,7 @@ export default function PlaceCard({ place, areas, done, dragging, onOpen, onTogg
   const className = ['card', done && 'is-done', dragging && 'is-dragging'].filter(Boolean).join(' ');
 
   return (
-    <article className={className} data-place={place.id} style={style}>
+    <article className={className} data-place={draggable ? place.id : undefined} style={style}>
       <button
         type="button"
         className="card__check"

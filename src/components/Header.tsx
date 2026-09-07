@@ -13,7 +13,7 @@ const STATUS_TEXT: Record<SyncStatus, string> = {
 interface Props {
   status: SyncStatus;
   filtering: boolean;
-  /** Desktop only: how many places are still unassigned, and the rail toggle. */
+  /** Desktop shortcut for the unassigned places modal. */
   poolCount: number;
   poolOpen: boolean;
   onTogglePool: () => void;
@@ -61,6 +61,8 @@ export default function Header({
           type="button"
           className={`btn btn--pool${poolOpen ? ' btn--pool-open' : ''}`}
           aria-expanded={poolOpen}
+          aria-haspopup="dialog"
+          aria-controls="pool-modal"
           onClick={onTogglePool}
         >
           טרם שובצו <span className="btn__count">{poolCount}</span>
