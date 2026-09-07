@@ -1,3 +1,4 @@
+import { setDrivingMinutes } from './lib/driving.ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DayRoute from './components/DayRoute.tsx';
 import PoolModal from './components/PoolModal.tsx';
@@ -129,6 +130,9 @@ export default function App() {
 
   const columnProps = {
     state: shown,
+    routeState: state,
+    onSetDrivingMinutes: (day: ColumnId, from: PlaceId, to: PlaceId, minutes: number | null) =>
+      update((s) => setDrivingMinutes(s, day, from, to, minutes)),
     areas: state.areas,
     dragging,
     target,
