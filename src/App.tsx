@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DayRoute from './components/DayRoute.tsx';
+import PoolModal from './components/PoolModal.tsx';
 import Header from './components/Header.tsx';
 import Column from './components/Column.tsx';
 import DayTabs from './components/DayTabs.tsx';
@@ -11,7 +12,6 @@ import {
   DAYS,
   POOL,
   TYPES,
-  type ColumnDef,
   type ColumnId,
   type PlaceId,
 } from './trip.ts';
@@ -38,7 +38,6 @@ import { useDragDrop, type DragState } from './lib/useDragDrop.ts';
 import { MOBILE_QUERY, useMediaQuery } from './lib/useMediaQuery.ts';
 
 const COLLAPSE_KEY = 'family-trip:collapsed';
-const POOL_OPEN_KEY = 'family-trip:pool-open';
 
 type Overlay = 'menu' | 'areas' | null;
 
@@ -56,10 +55,9 @@ export default function App() {
   const [editing, setEditing] = useState<PlaceId | null>(null);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [filter, setFilter] = useState<FilterState>({ area: null, type: null });
-  const [activeCol, setActiveCol] = useState<ColumnId>(POOL);
+  const [activeCol, setActiveCol] = useState<ColumnId>(DAYS[0].id);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => readJson(COLLAPSE_KEY, {}));
-  // desktop: the unassigned rail is closed until you ask for it
-  const [poolOpen, setPoolOpen] = useState<boolean>(() => readJson(POOL_OPEN_KEY, false));
+  const [poolOpen, setPoolOpen] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -96,11 +94,7 @@ export default function App() {
       return next;
     });
 
-  const togglePool = () =>
-    setPoolOpen((open) => {
-      writeJson(POOL_OPEN_KEY, !open);
-      return !open;
-    });
+  const togglePool = () => setPoolOpen((open) => !open);
 
   const openEditor = (id: PlaceId) => {
     if (justDragged()) return;
@@ -129,11 +123,9 @@ export default function App() {
   const shown = applyFilter(state, filter);
   const editingPlace = editing === null ? null : resolvePlace(state, editing);
 
-  const poolColumn = COLUMNS.find((c) => c.id === POOL) as ColumnDef;
   const dayColumns = COLUMNS.filter((c) => c.id !== POOL);
-  // mobile shows one column at a time (pool included, via the day tabs);
-  // desktop shows the days, with the pool in a rail you open when you need it
-  const boardColumns = isMobile ? COLUMNS.filter((c) => c.id === activeCol) : dayColumns;
+  // The pool opens separately; the board always shows scheduled days.
+  const boardColumns = isMobile ? dayColumns.filter((c) => c.id === activeCol) : dayColumns;
 
   const columnProps = {
     state: shown,
@@ -148,6 +140,21 @@ export default function App() {
     onSetDayNote: (day: ColumnId, note: string) => update((s) => setDayNote(s, day, note)),
     onSetDayHotel: (day: ColumnId, id: PlaceId | null) => update((s) => setDayHotel(s, day, id)),
   };
+
+  const editor = editingPlace && (
+    <PlaceEditor
+      place={editingPlace}
+      areas={state.areas}
+      column={columnOf(state, editingPlace.id)}
+      onSave={(id, patch) => update((s) => updateMeta(s, id, patch))}
+      onMove={(id, col) => {
+        update((s) => movePlace(s, id, col));
+        if (col !== POOL) setActiveCol(col);
+      }}
+      onRemove={(id) => update((s) => removePlace(s, id))}
+      onClose={() => setEditing(null)}
+    />
+  );
 
   return (
     <>
@@ -167,12 +174,6 @@ export default function App() {
       {isMobile && <DayTabs state={shown} active={activeCol} today={today} onSelect={setActiveCol} />}
 
       <div className="workspace">
-        {!isMobile && poolOpen && (
-          <aside className="pool-rail">
-            <Column {...columnProps} column={poolColumn} isToday={false} collapsed={false} />
-          </aside>
-        )}
-
         <main className={`board${isMobile ? ' board--single' : ''}`}>
           {boardColumns.map((column) => (
             <Column
@@ -224,20 +225,18 @@ export default function App() {
         />
       )}
 
-      {editingPlace && (
-        <PlaceEditor
-          place={editingPlace}
-          areas={state.areas}
-          column={columnOf(state, editingPlace.id)}
-          onSave={(id, patch) => update((s) => updateMeta(s, id, patch))}
-          onMove={(id, col) => {
-            update((s) => movePlace(s, id, col));
-            setActiveCol(col);
-          }}
-          onRemove={(id) => update((s) => removePlace(s, id))}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {poolOpen ? (
+        <PoolModal
+          state={shown}
+          editing={editingPlace !== null}
+          onOpen={openEditor}
+          onToggleDone={columnProps.onToggleDone}
+          onClose={() => setPoolOpen(false)}
+        >
+          {editor}
+        </PoolModal>
+      ) : editor}
+
     </>
   );
 }

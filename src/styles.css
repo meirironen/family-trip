@@ -198,25 +198,11 @@ body {
 }
 
 /* ---------- board ---------- */
-/* The board and the unassigned rail sit side by side, so a card can be dragged
-   straight out of the rail onto a day. The rail is not an overlay. */
 .workspace {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px 44px;
-}
-
-.pool-rail {
-  flex: 0 0 286px;
-  position: sticky;
-  top: 96px;
-  max-height: calc(100vh - 116px);
-  display: flex;
-}
-.pool-rail .column {
-  flex: 1;
-  max-height: none;
 }
 
 .board {
@@ -913,7 +899,7 @@ body {
   .board {
     display: block;
   }
-  .pool-rail {
+  .pool-modal {
     display: none;
   }
   .column {
@@ -945,3 +931,42 @@ body {
 .day-route__body { padding: 22px; }
 .day-route__stops { padding-inline-start: 24px; line-height: 1.9; }
 .day-route__links { display: flex; flex-direction: column; gap: 10px; }
+
+/* Unassigned places: fixed controls and a separately scrolling list. */
+.pool-modal {
+  width: min(640px, calc(100vw - 32px));
+  height: min(760px, calc(100dvh - 48px));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.pool-modal::backdrop { background: rgba(20, 17, 14, 0.4); }
+.pool-modal__content { height: 100%; display: flex; flex-direction: column; }
+.pool-modal__content[hidden] { display: none; }
+.pool-modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.pool-modal__head h2 { margin: 0; font-size: 20px; }
+.pool-modal__head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.pool-modal__list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+.pool-modal__item { margin-bottom: 12px; }
+.pool-modal__item > .btn { margin-top: 4px; }
+.pool-modal .card { cursor: default; }
+@media (max-width: 760px) {
+  .pool-modal { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
+  .pool-modal__head { padding-top: max(16px, env(safe-area-inset-top)); }
+  .pool-modal__list { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}

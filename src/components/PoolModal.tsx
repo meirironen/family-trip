@@ -1,0 +1,93 @@
+import { useEffect, useRef, type ReactNode } from 'react';
+import { resolvePlace, type TripState } from '../lib/state.ts';
+import { POOL, type PlaceId } from '../trip.ts';
+import PlaceCard from './PlaceCard.tsx';
+
+interface Props {
+  state: TripState;
+  editing: boolean;
+  onOpen: (id: PlaceId) => void;
+  onToggleDone: (id: PlaceId) => void;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+export default function PoolModal({ state, editing, onOpen, onToggleDone, onClose, children }: Props) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const ids = state.order[POOL];
+
+  useEffect(() => {
+    const element = dialog.current!;
+    const opener = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    element.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => {
+      element.close();
+      document.body.style.overflow = overflow;
+      opener?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (editing) dialog.current?.querySelector<HTMLSelectElement>('.drawer select')?.focus();
+    else closeButton.current?.focus();
+  }, [editing]);
+
+  return (
+    <dialog
+      ref={dialog}
+      id="pool-modal"
+      className="pool-modal"
+      aria-labelledby="pool-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        // The editor handles Escape itself; keep the list open underneath it.
+        if (!editing) onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget || editing) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) onClose();
+      }}
+    >
+      <div className="pool-modal__content" hidden={editing}>
+        <header className="pool-modal__head">
+          <div>
+            <h2 id="pool-title">טרם שובצו <span className="btn__count">{ids.length}</span></h2>
+            <p>בחרו מקום לעריכה או לשיבוץ ליום</p>
+          </div>
+          <button ref={closeButton} type="button" className="btn" aria-label="סגירת טרם שובצו" onClick={onClose}>
+            ✕
+          </button>
+        </header>
+        <div className="pool-modal__list" tabIndex={0} aria-label="מקומות שטרם שובצו">
+          {ids.length === 0 && <p className="column__empty">אין מקומות להצגה ברשימה</p>}
+          {ids.map((id) => {
+            const place = resolvePlace(state, id);
+            if (!place) return null;
+            return (
+              <div key={id} className="pool-modal__item">
+                <PlaceCard
+                  place={place}
+                  areas={state.areas}
+                  done={state.done[id] === true}
+                  dragging={false}
+                  draggable={false}
+                  onOpen={onOpen}
+                  onToggleDone={onToggleDone}
+                />
+                <button type="button" className="btn" aria-label={`עריכה ושיבוץ של ${place.he}`} onClick={() => onOpen(id)}>
+                  עריכה ושיבוץ
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {children}
+    </dialog>
+  );
+}
