@@ -396,7 +396,7 @@ function isPlace(v: unknown): v is Place {
 }
 
 export function isTypeKey(v: unknown): v is TypeKey {
-  return typeof v === 'string' && v in TYPES;
+  return typeof v === 'string' && Object.hasOwn(TYPES, v);
 }
 
 function isHexColor(v: unknown): v is string {

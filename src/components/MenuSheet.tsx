@@ -23,6 +23,7 @@ interface Props {
   filter: FilterState;
   onFilter: (next: FilterState) => void;
   onAddPlace: () => void;
+  onImport: () => void;
   onManageAreas: () => void;
   canInstall: boolean;
   onInstall: () => void;
@@ -36,6 +37,7 @@ export default function MenuSheet({
   filter,
   onFilter,
   onAddPlace,
+  onImport,
   onManageAreas,
   canInstall,
   onInstall,
@@ -81,6 +83,9 @@ export default function MenuSheet({
           )}
           <button type="button" className="sheet__item" onClick={onAddPlace}>
             ＋ הוספת מקום
+          </button>
+          <button type="button" className="sheet__item" onClick={onImport}>
+            ⇧ ייבוא מקומות
           </button>
           <button type="button" className="sheet__item" onClick={onManageAreas}>
             🎨 ניהול אזורים

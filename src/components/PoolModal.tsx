@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { resolvePlace, type TripState } from '../lib/state.ts';
 import { POOL, type PlaceId } from '../trip.ts';
 import PlaceCard from './PlaceCard.tsx';
@@ -9,13 +9,25 @@ interface Props {
   onOpen: (id: PlaceId) => void;
   onToggleDone: (id: PlaceId) => void;
   onClose: () => void;
+  onImport: () => void;
   children: ReactNode;
 }
 
-export default function PoolModal({ state, editing, onOpen, onToggleDone, onClose, children }: Props) {
+export default function PoolModal({ state, editing, onOpen, onToggleDone, onClose, onImport, children }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
+  const [section, setSection] = useState<'all' | 'attractions' | 'food' | 'other'>('all');
+  const [query, setQuery] = useState('');
   const ids = state.order[POOL];
+  const groupOf = (id: PlaceId) => {
+    const type = resolvePlace(state, id)?.type;
+    return type === 'food' ? 'food' : type === 'attraction' || type === 'hike' ? 'attractions' : 'other';
+  };
+  const visible = ids.filter((id) => {
+    const place = resolvePlace(state, id);
+    return (section === 'all' || groupOf(id) === section) &&
+      `${place?.he ?? ''} ${place?.orig ?? ''}`.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim());
+  });
 
   useEffect(() => {
     const element = dialog.current!;
@@ -63,9 +75,23 @@ export default function PoolModal({ state, editing, onOpen, onToggleDone, onClos
             ✕
           </button>
         </header>
+        <div className="pool-controls">
+          <div className="pool-sections" aria-label="סוגי מקומות">
+            {([['all', 'הכל'], ['attractions', '◎ אטרקציות'], ['food', '🍽 אוכל'], ['other', 'אחר']] as const).map(([key, label]) => (
+              <button key={key} type="button" className={`chip${section === key ? ' chip--on' : ''}`}
+                aria-pressed={section === key} onClick={() => setSection(key)}>
+                {label} <span>{key === 'all' ? ids.length : ids.filter((id) => groupOf(id) === key).length}</span>
+              </button>
+            ))}
+          </div>
+          <div className="pool-search">
+            <input type="search" aria-label="חיפוש מקום" placeholder="חיפוש מקום…" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <button type="button" className="btn" onClick={onImport}>⇧ ייבוא מקומות</button>
+          </div>
+        </div>
         <div className="pool-modal__list" tabIndex={0} aria-label="מקומות שטרם שובצו">
-          {ids.length === 0 && <p className="column__empty">אין מקומות להצגה ברשימה</p>}
-          {ids.map((id) => {
+          {visible.length === 0 && <p className="column__empty">אין מקומות להצגה ברשימה</p>}
+          {visible.map((id) => {
             const place = resolvePlace(state, id);
             if (!place) return null;
             return (
