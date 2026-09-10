@@ -145,6 +145,7 @@ export default function App() {
 
   const editor = editingPlace && (
     <PlaceEditor
+      state={state}
       place={editingPlace}
       areas={state.areas}
       column={columnOf(state, editingPlace.id)}
