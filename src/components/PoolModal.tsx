@@ -43,7 +43,7 @@ export default function PoolModal({ state, editing, onOpen, onToggleDone, onClos
   }, []);
 
   useEffect(() => {
-    if (editing) dialog.current?.querySelector<HTMLSelectElement>('.drawer select')?.focus();
+    if (editing) dialog.current?.querySelector<HTMLHeadingElement>('.drawer__title')?.focus({ preventScroll: true });
     else closeButton.current?.focus();
   }, [editing]);
 
