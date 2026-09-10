@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { COLUMNS, TYPES, type Area, type AreaId, type ColumnId, type Place, type PlaceId } from '../trip.ts';
-import { isHttpUrl, isTypeKey, mapsUrl } from '../lib/state.ts';
+import { isHttpUrl, isTypeKey, mapsUrl, type TripState } from '../lib/state.ts';
+import { dayAssignmentLabel } from '../lib/dayAssignment.ts';
 
 /** Every field is edited as a string; typed keys are validated on save. */
 type Draft = Record<FieldKey, string>;
@@ -26,6 +27,7 @@ const FIELDS: readonly Field[] = [
 ];
 
 interface Props {
+  state: TripState;
   place: Place;
   areas: Record<AreaId, Area>;
   column: ColumnId | null;
@@ -35,7 +37,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function PlaceEditor({ place, areas, column, onSave, onMove, onRemove, onClose }: Props) {
+export default function PlaceEditor({ state, place, areas, column, onSave, onMove, onRemove, onClose }: Props) {
   const [draft, setDraft] = useState<Draft>(
     () => Object.fromEntries(FIELDS.map((f) => [f.key, place[f.key] ?? ''])) as Draft
   );
@@ -110,7 +112,7 @@ export default function PlaceEditor({ place, areas, column, onSave, onMove, onRe
           >
             {COLUMNS.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.dow ? `${c.title} · ${c.dow}${c.note ? ` — ${c.note}` : ''}` : c.title}
+                {dayAssignmentLabel(state, c)}
               </option>
             ))}
           </select>
