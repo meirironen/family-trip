@@ -538,11 +538,16 @@ body {
   border-radius: 8px;
 }
 .drawer__actions {
+  position: sticky;
+  top: -18px;
+  z-index: 1;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  margin: -18px -18px 16px;
+  padding: max(18px, env(safe-area-inset-top)) 18px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
 }
 
 .field {
