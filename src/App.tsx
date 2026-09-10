@@ -1,3 +1,5 @@
+import PlaceImport from './components/PlaceImport.tsx';
+import { importPlaces } from './lib/placeImport.ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DayRoute from './components/DayRoute.tsx';
 import PoolModal from './components/PoolModal.tsx';
@@ -39,7 +41,7 @@ import { MOBILE_QUERY, useMediaQuery } from './lib/useMediaQuery.ts';
 
 const COLLAPSE_KEY = 'family-trip:collapsed';
 
-type Overlay = 'menu' | 'areas' | null;
+type Overlay = 'menu' | 'areas' | 'import' | null;
 
 /** The event Chrome fires when the app is installable. Not in lib.dom yet. */
 interface BeforeInstallPromptEvent extends Event {
@@ -204,11 +206,27 @@ export default function App() {
           status={status}
           filter={filter}
           onFilter={setFilter}
+          onImport={() => setOverlay('import')}
           onAddPlace={startNewPlace}
           onManageAreas={() => setOverlay('areas')}
           canInstall={installEvent !== null}
           onInstall={install}
           onClose={() => setOverlay(null)}
+        />
+      )}
+
+      {overlay === 'import' && (
+        <PlaceImport state={state} onClose={() => setOverlay(null)}
+          onViewPlaces={() => { setOverlay(null); setFilter({ area: null, type: null }); setPoolOpen(true); }}
+          onImport={(rows) => {
+            let result = { added: 0, skipped: 0 };
+            update((current) => {
+              const imported = importPlaces(current, rows);
+              result = { added: imported.added, skipped: imported.skipped };
+              return imported.state;
+            });
+            return result;
+          }}
         />
       )}
 
@@ -229,6 +247,7 @@ export default function App() {
         <PoolModal
           state={shown}
           editing={editingPlace !== null}
+          onImport={() => { setPoolOpen(false); setOverlay('import'); }}
           onOpen={openEditor}
           onToggleDone={columnProps.onToggleDone}
           onClose={() => setPoolOpen(false)}

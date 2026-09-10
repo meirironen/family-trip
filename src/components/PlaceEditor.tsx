@@ -77,6 +77,24 @@ export default function PlaceEditor({ place, areas, column, onSave, onMove, onRe
     <>
       <div className="scrim" onClick={onClose} />
       <aside className="drawer" role="dialog" aria-label={`עריכת ${place.he}`}>
+        <header className="drawer__actions">
+          <button type="button" className="btn btn--primary" onClick={save}>
+            שמירה
+          </button>
+          <button type="button" className="btn" onClick={onClose}>
+            ביטול
+          </button>
+          <button
+            type="button"
+            className="btn btn--danger"
+            onClick={() => {
+              onRemove(place.id);
+              onClose();
+            }}
+          >
+            מחיקה
+          </button>
+        </header>
         <h2 className="drawer__title">{place.he}</h2>
         {place.orig && <p className="drawer__orig">{place.orig}</p>}
 
@@ -147,24 +165,7 @@ export default function PlaceEditor({ place, areas, column, onSave, onMove, onRe
           </div>
         ))}
 
-        <footer className="drawer__actions">
-          <button type="button" className="btn btn--primary" onClick={save}>
-            שמירה
-          </button>
-          <button type="button" className="btn" onClick={onClose}>
-            ביטול
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger"
-            onClick={() => {
-              onRemove(place.id);
-              onClose();
-            }}
-          >
-            מחיקה
-          </button>
-        </footer>
+
       </aside>
     </>
   );
