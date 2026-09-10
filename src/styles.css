@@ -1032,3 +1032,7 @@ body {
 .driving-time [role="alert"] { display: block; margin-top: 5px; color: var(--accent); }
 .driving-total { margin: 0; padding: 8px 12px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
 @media (max-width: 760px) { .driving-time input { min-height: 44px; font-size: 16px; } }
+
+.driving-time__controls { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.driving-time__map { min-height: 36px; font-size: 12px; text-decoration: none; }
+@media (max-width: 760px) { .driving-time__map { min-height: 44px; } }

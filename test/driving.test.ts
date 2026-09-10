@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { emptyState, movePlace, normalize, removePlace } from '../src/lib/state.ts';
-import { drivingKey, drivingLegs, drivingSummary, setDrivingMinutes } from '../src/lib/driving.ts';
+import { drivingKey, drivingMapsUrl, drivingLegs, drivingSummary, setDrivingMinutes } from '../src/lib/driving.ts';
 import { DAYS, POOL } from '../src/trip.ts';
 
 const day = DAYS[0].id;
@@ -74,4 +74,16 @@ test('edits require a real consecutive pair and whole minutes from 0 through 144
   assert.equal(setDrivingMinutes(state, day, a, c, 10), state);
   assert.equal(setDrivingMinutes(state, POOL, a, b, 10), state);
   assert.equal(drivingLegs(setDrivingMinutes(state, day, a, b, 1440), day)[0].minutes, 1440);
+});
+
+test('Maps link uses the directed pair, driving mode, and safely encoded original names', () => {
+  const url = new URL(drivingMapsUrl({ he: 'מלון', orig: 'Hotel A & B' }, { he: 'אגם בראייס', orig: 'Pragser Wildsee' }));
+  assert.equal(url.origin + url.pathname, 'https://www.google.com/maps/dir/');
+  assert.equal(url.searchParams.get('api'), '1');
+  assert.equal(url.searchParams.get('travelmode'), 'driving');
+  assert.equal(url.searchParams.get('origin'), 'Hotel A & B');
+  assert.equal(url.searchParams.get('destination'), 'Pragser Wildsee');
+  const fallback = new URL(drivingMapsUrl({ he: 'מוצא', orig: ' ' }, { he: 'יעד' }));
+  assert.equal(fallback.searchParams.get('origin'), 'מוצא');
+  assert.equal(fallback.searchParams.get('destination'), 'יעד');
 });
