@@ -1,6 +1,6 @@
 import DrivingTime from './DrivingTime.tsx';
 import DrivingTotal from './DrivingTotal.tsx';
-import { drivingLegs } from '../lib/driving.ts';
+import { drivingLegs, drivingMapsUrl } from '../lib/driving.ts';
 import { useEffect, useState } from 'react';
 import PlaceCard from './PlaceCard.tsx';
 import {
@@ -175,6 +175,7 @@ export default function Column({
                 {leg && previous && <DrivingTime
                   key={JSON.stringify([leg.from, leg.to])}
                   minutes={leg.minutes} from={previous.he} to={place.he}
+                  mapsUrl={drivingMapsUrl(previous, place)}
                   onSave={(minutes) => onSetDrivingMinutes(column.id, leg.from, leg.to, minutes)}
                 />}
                 {dropAt === i && <div className="drop-line" aria-hidden="true" />}

@@ -1,4 +1,4 @@
-import { COLUMN_IDS, POOL, type ColumnId, type PlaceId } from '../trip.ts';
+import { COLUMN_IDS, POOL, type ColumnId, type PlaceId, type Place } from '../trip.ts';
 import type { TripState } from './state.ts';
 
 export const MAX_DRIVING_MINUTES = 1440;
@@ -55,4 +55,15 @@ export function formatDrivingMinutes(minutes: number): string {
   if (minutes < 60) return `${minutes} דק׳`;
   const remainder = minutes % 60;
   return `${Math.floor(minutes / 60)} שע׳${remainder ? ` ${remainder} דק׳` : ''}`;
+}
+
+/** Directions for this exact leg, using original place names for Maps searches. */
+export function drivingMapsUrl(from: Pick<Place, 'he' | 'orig'>, to: Pick<Place, 'he' | 'orig'>): string {
+  const params = new URLSearchParams({
+    api: '1',
+    travelmode: 'driving',
+    origin: from.orig?.trim() || from.he,
+    destination: to.orig?.trim() || to.he,
+  });
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }

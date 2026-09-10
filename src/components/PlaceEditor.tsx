@@ -97,7 +97,7 @@ export default function PlaceEditor({ state, place, areas, column, onSave, onMov
             מחיקה
           </button>
         </header>
-        <h2 className="drawer__title">{place.he}</h2>
+        <h2 className="drawer__title" tabIndex={-1}>{place.he}</h2>
         {place.orig && <p className="drawer__orig">{place.orig}</p>}
 
         <div className="field">

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { MAX_DRIVING_MINUTES, validDrivingMinutes } from '../lib/driving.ts';
 
-export default function DrivingTime({ minutes, from, to, onSave }: {
-  minutes: number | null; from: string; to: string; onSave: (minutes: number | null) => void;
+export default function DrivingTime({ minutes, from, to, mapsUrl, onSave }: {
+  mapsUrl: string; minutes: number | null; from: string; to: string; onSave: (minutes: number | null) => void;
 }) {
   const [draft, setDraft] = useState(minutes === null ? '' : String(minutes));
   const [error, setError] = useState(false);
@@ -18,6 +18,7 @@ export default function DrivingTime({ minutes, from, to, onSave }: {
   };
   return (
     <div className="driving-time">
+      <div className="driving-time__controls">
       <label>
         <span aria-hidden="true">🚗 </span>זמן נסיעה
         <input
@@ -40,6 +41,11 @@ export default function DrivingTime({ minutes, from, to, onSave }: {
         />
         <span>דק׳</span>
       </label>
+      <a className="btn driving-time__map" href={mapsUrl} target="_blank" rel="noopener noreferrer"
+        aria-label={`פתיחת מסלול נסיעה מ${from} אל ${to} ב-Google Maps`}>
+        🗺 Google Maps ↗
+      </a>
+      </div>
       {error && <span role="alert">הזינו דקות שלמות בין 0 ל־1440</span>}
     </div>
   );
