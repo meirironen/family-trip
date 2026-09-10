@@ -34,8 +34,14 @@ export default function PlaceCard({ place, areas, done, dragging, draggable = tr
 
       <div className="card__body" onClick={() => onOpen(place.id)}>
         <h3 className="card__title">
-          <span aria-hidden="true">{type.icon} </span>
-          {place.he}
+          {draggable ? (
+            <><span aria-hidden="true">{type.icon} </span>{place.he}</>
+          ) : (
+            <button type="button" className="card__open" aria-label={`עריכת ${place.he}`}>
+              <span aria-hidden="true">{type.icon} </span>
+              {place.he}
+            </button>
+          )}
         </h3>
         <p className="card__meta">
           {[area?.he, place.dur].filter(Boolean).join(' · ')}

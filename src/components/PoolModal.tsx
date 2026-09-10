@@ -105,9 +105,6 @@ export default function PoolModal({ state, editing, onOpen, onToggleDone, onClos
                   onOpen={onOpen}
                   onToggleDone={onToggleDone}
                 />
-                <button type="button" className="btn" aria-label={`עריכה ושיבוץ של ${place.he}`} onClick={() => onOpen(id)}>
-                  עריכה ושיבוץ
-                </button>
               </div>
             );
           })}

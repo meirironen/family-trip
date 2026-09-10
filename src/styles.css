@@ -968,7 +968,6 @@ body {
 .pool-modal__head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 .pool-modal__list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
 .pool-modal__item { margin-bottom: 12px; }
-.pool-modal__item > .btn { margin-top: 4px; }
 .pool-modal .card { cursor: default; }
 @media (max-width: 760px) {
   .pool-modal { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
@@ -1011,3 +1010,16 @@ body {
   .import-selection { width: 100%; }
   .pool-search input, .import-modal input { font-size: 16px; }
 }
+
+/* The place title is the keyboard-accessible edit action; no extra row needed. */
+.card__open {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.card__open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.pool-modal .card__body { cursor: pointer; }
