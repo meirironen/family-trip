@@ -1,3 +1,4 @@
+import { setDrivingMinutes } from './lib/driving.ts';
 import PlaceImport from './components/PlaceImport.tsx';
 import { importPlaces } from './lib/placeImport.ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -131,6 +132,9 @@ export default function App() {
 
   const columnProps = {
     state: shown,
+    routeState: state,
+    onSetDrivingMinutes: (day: ColumnId, from: PlaceId, to: PlaceId, minutes: number | null) =>
+      update((s) => setDrivingMinutes(s, day, from, to, minutes)),
     areas: state.areas,
     dragging,
     target,

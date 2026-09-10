@@ -1,3 +1,4 @@
+import DrivingTotal from './DrivingTotal.tsx';
 import { useEffect, useRef, useState } from 'react';
 import { hotelOf, resolvePlace, type TripState } from '../lib/state.ts';
 import { dayRouteLinks } from '../lib/dayRoute.ts';
@@ -44,6 +45,8 @@ export default function DayRoute({ state, column, onClose }: {
         </div>}
         {start === 'current' && <p className="sheet__note">Google Maps ישתמש במיקום שלכם, או יבקש נקודת התחלה.</p>}
         <p className="sheet__note">כל מקומות היום לפי הסדר בלוח, כולל מקומות שהוסתרו במסנן.</p>
+        <DrivingTotal state={state} day={column.id} />
+        <p className="sheet__note">זמני הנסיעה הידניים כוללים רק מקטעים בין מקומות בלוח, ללא נסיעה מנקודת התחלה נוספת.</p>
         <ol className="day-route__stops">{places.map((p) => <li key={p.id}>{p.he}</li>)}</ol>
         {!places.length && <p>אין עדיין מקומות ביום הזה.</p>}
         {start === 'first' && places.length === 1 && <p>הוסיפו מקום נוסף למסלול או בחרו נקודת התחלה אחרת.</p>}
