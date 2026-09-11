@@ -1,6 +1,4 @@
-import DrivingTime from './DrivingTime.tsx';
 import DrivingTotal from './DrivingTotal.tsx';
-import { drivingLegs, drivingMapsUrl } from '../lib/driving.ts';
 import { useEffect, useState } from 'react';
 import PlaceCard from './PlaceCard.tsx';
 import {
@@ -19,7 +17,6 @@ interface Props {
   column: ColumnDef;
   state: TripState;
   routeState: TripState;
-  onSetDrivingMinutes: (day: ColumnId, from: PlaceId, to: PlaceId, minutes: number | null) => void;
   areas: Record<AreaId, Area>;
   isToday: boolean;
   collapsed: boolean;
@@ -44,7 +41,6 @@ export default function Column({
   column,
   state,
   routeState,
-  onSetDrivingMinutes,
   areas,
   isToday,
   collapsed,
@@ -72,7 +68,6 @@ export default function Column({
     .join(' ');
 
   const isDay = column.id !== POOL;
-  const legs = drivingLegs(routeState, column.id);
   const chosen = dayArea ? areas[dayArea] : undefined;
   const note = isDay ? dayNote(state, column.id) : '';
   const hotel = isDay ? hotelOf(state, column.id) : null;
@@ -181,17 +176,9 @@ export default function Column({
           {ids.map((id, i) => {
             const place = resolvePlace(state, id);
             if (!place) return null;
-            const leg = legs.find((leg) => leg.to === id && leg.from === ids[i - 1]);
-            const previous = leg ? resolvePlace(routeState, leg.from) : null;
             return (
               <div key={id} className="itinerary-stop">
                 {focused && isDay && <span className="stop-number">{i + 1}</span>}
-                {leg && previous && <DrivingTime
-                  key={JSON.stringify([leg.from, leg.to])}
-                  minutes={leg.minutes} from={previous.he} to={place.he}
-                  mapsUrl={drivingMapsUrl(previous, place)}
-                  onSave={(minutes) => onSetDrivingMinutes(column.id, leg.from, leg.to, minutes)}
-                />}
                 {dropAt === i && <div className="drop-line" aria-hidden="true" />}
                 <PlaceCard
                   place={place}
