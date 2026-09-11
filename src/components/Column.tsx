@@ -26,6 +26,10 @@ interface Props {
   onToggleCollapse: (id: ColumnId) => void;
   dragging: DragState | null;
   target: DropTarget | null;
+  focused?: boolean;
+  addToDay?: ColumnId;
+  onAddPlace?: () => void;
+  onMove: (id: PlaceId, col: ColumnId) => void;
   onRoute: (id: ColumnId) => void;
   onOpen: (id: PlaceId) => void;
   onToggleDone: (id: PlaceId) => void;
@@ -49,6 +53,10 @@ export default function Column({
   target,
   onOpen,
   onRoute,
+  focused = false,
+  addToDay,
+  onAddPlace,
+  onMove,
   onToggleDone,
   dayArea,
   onSetDayArea,
@@ -59,7 +67,7 @@ export default function Column({
   const doneCount = ids.filter((id) => state.done[id]).length;
   const dropAt = target?.col === column.id ? target.index : null;
 
-  const className = ['column', column.id === POOL && 'column--pool', isToday && 'column--today', target?.col === column.id && 'column--drop-target']
+  const className = ['column', focused && 'column--focused', column.id === POOL && 'column--pool', isToday && 'column--today', target?.col === column.id && 'column--drop-target']
     .filter(Boolean)
     .join(' ');
 
@@ -76,7 +84,8 @@ export default function Column({
         <button
           type="button"
           className="column__toggle"
-          aria-expanded={!collapsed}
+          aria-expanded={focused ? undefined : !collapsed}
+          disabled={focused}
           onClick={() => onToggleCollapse(column.id)}
         >
           <h2 className="column__title">
@@ -100,6 +109,8 @@ export default function Column({
 
       {isDay && <DrivingTotal state={routeState} day={column.id} />}
 
+      {focused && isDay && <p className="day-hotel-summary">{hotel ? `מלון: ${hotel.he}` : 'לא נבחר מלון'}{chosen ? ` · ${chosen.he}` : ''}</p>}
+      {isDay && <details className="day-settings"><summary>עריכת פרטי היום</summary>
       {isDay && onSetDayNote && (
         <DayNoteInput
           value={note}
@@ -161,6 +172,8 @@ export default function Column({
         </div>
       )}
 
+      </details>}
+
       {!collapsed && (
         <div className="column__list" data-drop-list>
           {ids.length === 0 && dropAt === null && <p className="column__empty">גררו לכאן</p>}
@@ -171,7 +184,8 @@ export default function Column({
             const leg = legs.find((leg) => leg.to === id && leg.from === ids[i - 1]);
             const previous = leg ? resolvePlace(routeState, leg.from) : null;
             return (
-              <div key={id}>
+              <div key={id} className="itinerary-stop">
+                {focused && isDay && <span className="stop-number">{i + 1}</span>}
                 {leg && previous && <DrivingTime
                   key={JSON.stringify([leg.from, leg.to])}
                   minutes={leg.minutes} from={previous.he} to={place.he}
@@ -185,6 +199,9 @@ export default function Column({
                   done={state.done[id] === true}
                   dragging={dragging?.id === id}
                   onOpen={onOpen}
+                  expanded={focused}
+                  onMove={onMove}
+                  addToDay={addToDay}
                   onToggleDone={onToggleDone}
                 />
               </div>
@@ -194,6 +211,7 @@ export default function Column({
           {dropAt !== null && dropAt >= ids.length && <div className="drop-line" aria-hidden="true" />}
         </div>
       )}
+      {focused && onAddPlace && <button className="add-stop" onClick={onAddPlace}>{isDay ? '＋ הוספת מקום ליום' : '＋ הוספת מקום שמור'}</button>}
     </section>
   );
 }
