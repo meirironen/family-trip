@@ -14,11 +14,7 @@ interface Props {
  */
 export default function DayTabs({ state, active, today, onSelect }: Props) {
   return (
-    <nav className="daytabs" aria-label="ימי הטיול" onWheel={(event) => {
-      if (event.deltaX === 0 && event.currentTarget.scrollWidth > event.currentTarget.clientWidth) {
-        event.currentTarget.scrollLeft -= event.deltaY;
-      }
-    }}>
+    <nav className="daytabs" aria-label="ימי הטיול">
       {COLUMNS.map((column) => {
         const ids = state.order[column.id] ?? [];
         const done = ids.filter((id) => state.done[id]).length;
