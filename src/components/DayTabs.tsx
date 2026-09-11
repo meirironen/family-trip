@@ -1,5 +1,5 @@
 import type { TripState } from '../lib/state.ts';
-import { COLUMNS, type ColumnId, type DayId } from '../trip.ts';
+import { COLUMNS, POOL, type ColumnId, type DayId } from '../trip.ts';
 
 interface Props {
   state: TripState;
@@ -15,7 +15,7 @@ interface Props {
 export default function DayTabs({ state, active, today, onSelect }: Props) {
   return (
     <nav className="daytabs" aria-label="ימי הטיול">
-      {COLUMNS.map((column) => {
+      {COLUMNS.filter((column) => column.id !== POOL).map((column) => {
         const ids = state.order[column.id] ?? [];
         const done = ids.filter((id) => state.done[id]).length;
         const isActive = column.id === active;

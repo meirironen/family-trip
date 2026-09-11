@@ -1,3 +1,4 @@
+import { normalizeDrivingMinutes } from './driving.ts';
 /**
  * Pure helpers for the shared itinerary state.
  * No React, no I/O — everything here is covered by test/state.test.ts.
@@ -20,6 +21,8 @@ import {
 
 /** The whole shared document. */
 export interface TripState {
+  /** Manual minutes keyed by the directed pair of place IDs. */
+  drivingMinutes: Record<string, number>;
   order: Record<ColumnId, PlaceId[]>;
   /** Per-place edits made in the app, layered over the record in trip.ts. */
   meta: Record<PlaceId, Partial<Place>>;
@@ -52,6 +55,7 @@ export function emptyState(): TripState {
     dayAreas: {},
     dayNotes: {},
     dayHotels: {},
+    drivingMinutes: {},
   };
 }
 
@@ -75,6 +79,7 @@ export function normalize(input: unknown): TripState {
     dayAreas: {},
     dayNotes: {},
     dayHotels: {},
+    drivingMinutes: {},
   };
 
   // keep only day→area pairs that still point at a real day and a real area
@@ -95,6 +100,7 @@ export function normalize(input: unknown): TripState {
 
   const rawOrder = isRecord(s.order) ? s.order : {};
   const known = new Set(allPlaces(out).map((p) => p.id));
+  out.drivingMinutes = normalizeDrivingMinutes(s.drivingMinutes, known);
   const seen = new Set<PlaceId>();
 
   for (const col of COLUMN_IDS) {
@@ -205,7 +211,9 @@ export function removePlace(state: TripState, id: PlaceId): TripState {
   const done = { ...state.done };
   delete done[id];
 
-  return { ...state, order, done, removed: [...state.removed, id] };
+  const known = new Set(allPlaces(state).filter((p) => p.id !== id).map((p) => p.id));
+  return { ...state, order, done, removed: [...state.removed, id],
+    drivingMinutes: normalizeDrivingMinutes(state.drivingMinutes, known) };
 }
 
 export function newPlace(): Place {
@@ -396,7 +404,7 @@ function isPlace(v: unknown): v is Place {
 }
 
 export function isTypeKey(v: unknown): v is TypeKey {
-  return typeof v === 'string' && v in TYPES;
+  return typeof v === 'string' && Object.hasOwn(TYPES, v);
 }
 
 function isHexColor(v: unknown): v is string {

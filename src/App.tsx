@@ -1,5 +1,9 @@
+import { setDrivingMinutes } from './lib/driving.ts';
+import PlaceImport from './components/PlaceImport.tsx';
+import { importPlaces } from './lib/placeImport.ts';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DayRoute from './components/DayRoute.tsx';
+import PoolModal from './components/PoolModal.tsx';
 import Header from './components/Header.tsx';
 import Column from './components/Column.tsx';
 import DayTabs from './components/DayTabs.tsx';
@@ -11,7 +15,6 @@ import {
   DAYS,
   POOL,
   TYPES,
-  type ColumnDef,
   type ColumnId,
   type PlaceId,
 } from './trip.ts';
@@ -38,9 +41,8 @@ import { useDragDrop, type DragState } from './lib/useDragDrop.ts';
 import { MOBILE_QUERY, useMediaQuery } from './lib/useMediaQuery.ts';
 
 const COLLAPSE_KEY = 'family-trip:collapsed';
-const POOL_OPEN_KEY = 'family-trip:pool-open';
 
-type Overlay = 'menu' | 'areas' | null;
+type Overlay = 'menu' | 'areas' | 'import' | null;
 
 /** The event Chrome fires when the app is installable. Not in lib.dom yet. */
 interface BeforeInstallPromptEvent extends Event {
@@ -58,10 +60,8 @@ export default function App() {
   const [filter, setFilter] = useState<FilterState>({ area: null, type: null });
   const [activeCol, setActiveCol] = useState<ColumnId>(DAYS[0].id);
   const [overview, setOverview] = useState(false);
-  const [search, setSearch] = useState('');
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => readJson(COLLAPSE_KEY, {}));
-  // desktop: the unassigned rail is closed until you ask for it
-  const [poolOpen, setPoolOpen] = useState<boolean>(() => readJson(POOL_OPEN_KEY, true));
+  const [poolOpen, setPoolOpen] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
@@ -85,8 +85,8 @@ export default function App() {
   const filtering = filter.area !== null || filter.type !== null;
   const onDrop = useCallback(
     (id: PlaceId, col: ColumnId, index: number) =>
-      update((s) => movePlace(s, id, col, filtering || (col === POOL && search.trim() !== '') ? null : index)),
-    [update, filtering, search]
+      update((s) => movePlace(s, id, col, filtering ? null : index)),
+    [update, filtering]
   );
 
   const { dragging, target, justDragged } = useDragDrop(onDrop);
@@ -98,11 +98,7 @@ export default function App() {
       return next;
     });
 
-  const togglePool = () =>
-    setPoolOpen((open) => {
-      writeJson(POOL_OPEN_KEY, !open);
-      return !open;
-    });
+  const togglePool = () => setPoolOpen((open) => !open);
 
   const openEditor = (id: PlaceId) => {
     if (justDragged()) return;
@@ -131,17 +127,14 @@ export default function App() {
   const shown = applyFilter(state, filter);
   const editingPlace = editing === null ? null : resolvePlace(state, editing);
 
-  const poolColumn = COLUMNS.find((c) => c.id === POOL) as ColumnDef;
   const dayColumns = COLUMNS.filter((c) => c.id !== POOL);
-  // The itinerary is primary; overview shows every day together.
-  const boardColumns = overview ? dayColumns : COLUMNS.filter((c) => c.id === activeCol);
-  const saved = { ...shown, order: { ...shown.order, [POOL]: shown.order[POOL].filter((id) => {
-    const p = resolvePlace(state, id);
-    return p && `${p.he} ${p.orig ?? ''} ${p.notes ?? ''}`.toLocaleLowerCase().includes(search.toLocaleLowerCase());
-  }) } };
+  const boardColumns = overview ? dayColumns : dayColumns.filter((c) => c.id === activeCol);
 
   const columnProps = {
     state: shown,
+    routeState: state,
+    onSetDrivingMinutes: (day: ColumnId, from: PlaceId, to: PlaceId, minutes: number | null) =>
+      update((s) => setDrivingMinutes(s, day, from, to, minutes)),
     areas: state.areas,
     dragging,
     target,
@@ -154,6 +147,22 @@ export default function App() {
     onSetDayNote: (day: ColumnId, note: string) => update((s) => setDayNote(s, day, note)),
     onSetDayHotel: (day: ColumnId, id: PlaceId | null) => update((s) => setDayHotel(s, day, id)),
   };
+
+  const editor = editingPlace && (
+    <PlaceEditor
+      state={state}
+      place={editingPlace}
+      areas={state.areas}
+      column={columnOf(state, editingPlace.id)}
+      onSave={(id, patch) => update((s) => updateMeta(s, id, patch))}
+      onMove={(id, col) => {
+        update((s) => movePlace(s, id, col));
+        if (col !== POOL) setActiveCol(col);
+      }}
+      onRemove={(id) => update((s) => removePlace(s, id))}
+      onClose={() => setEditing(null)}
+    />
+  );
 
   return (
     <>
@@ -171,31 +180,18 @@ export default function App() {
       />
 
       <div className="trip-navigation">
-        <DayTabs state={state} active={overview ? null : activeCol} today={today} onSelect={(id) => { setActiveCol(id); setOverview(false); }} />
+        <DayTabs state={state} active={overview ? null : activeCol} today={today} onSelect={(id) => { if (id === POOL) { setPoolOpen(true); return; } setActiveCol(id); setOverview(false); }} />
         <button className={`btn${overview ? ' btn--primary' : ''}`} aria-pressed={overview} onClick={() => setOverview((v) => !v)}>מבט על הטיול</button>
       </div>
       <div className="view-heading"><div><p className="eyebrow">צפון איטליה · 22–30 בספטמבר</p><h2>{overview ? 'כל הטיול, במקום אחד' : activeCol === POOL ? 'רעיונות לטיול' : 'היום שלכם, בקצב שלכם'}</h2></div>
-        <button className="btn" onClick={() => { setActiveCol(POOL); setOverview(false); }}>מקומות שמורים · {state.order[POOL].length}</button>
+        <button className="btn" onClick={() => setPoolOpen(true)}>מקומות שמורים · {state.order[POOL].length}</button>
       </div>
 
       <div className={`workspace${!overview ? ' workspace--focused' : ''}`}>
-        {!isMobile && poolOpen && activeCol !== POOL && (
-          <aside className="pool-rail">
-            <div className="saved-panel">
-              <h2>מקומות שמורים</h2><p>רעיונות שמחכים ליום המתאים</p>
-              <input className="saved-search" aria-label="חיפוש במקומות שמורים" placeholder="חיפוש מקום…" value={search} onChange={(e) => setSearch(e.target.value)} />
-              <button className="btn" onClick={() => setOverlay('menu')}>סינון לפי אזור וסוג</button>
-              <Column {...columnProps} state={saved} column={poolColumn} isToday={false} collapsed={false} addToDay={!overview ? activeCol : undefined} />
-            </div>
-          </aside>
-        )}
-
         <main className={`board${!overview ? ' board--focused' : ''}`}>
-          {!overview && activeCol === POOL && <div className="saved-toolbar"><input className="saved-search" aria-label="חיפוש במקומות שמורים" placeholder="חיפוש מקום…" value={search} onChange={(e) => setSearch(e.target.value)} /><button className="btn" onClick={() => setOverlay('menu')}>סינון לפי אזור וסוג</button></div>}
           {boardColumns.map((column) => (
             <Column
               {...columnProps}
-              state={column.id === POOL ? saved : shown}
               key={column.id}
               column={column}
               isToday={column.id === today}
@@ -224,11 +220,27 @@ export default function App() {
           status={status}
           filter={filter}
           onFilter={setFilter}
+          onImport={() => setOverlay('import')}
           onAddPlace={startNewPlace}
           onManageAreas={() => setOverlay('areas')}
           canInstall={installEvent !== null}
           onInstall={install}
           onClose={() => setOverlay(null)}
+        />
+      )}
+
+      {overlay === 'import' && (
+        <PlaceImport state={state} onClose={() => setOverlay(null)}
+          onViewPlaces={() => { setOverlay(null); setFilter({ area: null, type: null }); setPoolOpen(true); }}
+          onImport={(rows) => {
+            let result = { added: 0, skipped: 0 };
+            update((current) => {
+              const imported = importPlaces(current, rows);
+              result = { added: imported.added, skipped: imported.skipped };
+              return imported.state;
+            });
+            return result;
+          }}
         />
       )}
 
@@ -245,20 +257,19 @@ export default function App() {
         />
       )}
 
-      {editingPlace && (
-        <PlaceEditor
-          place={editingPlace}
-          areas={state.areas}
-          column={columnOf(state, editingPlace.id)}
-          onSave={(id, patch) => update((s) => updateMeta(s, id, patch))}
-          onMove={(id, col) => {
-            update((s) => movePlace(s, id, col));
-            setActiveCol(col);
-          }}
-          onRemove={(id) => update((s) => removePlace(s, id))}
-          onClose={() => setEditing(null)}
-        />
-      )}
+      {poolOpen ? (
+        <PoolModal
+          state={shown}
+          editing={editingPlace !== null}
+          onImport={() => { setPoolOpen(false); setOverlay('import'); }}
+          onOpen={openEditor}
+          onToggleDone={columnProps.onToggleDone}
+          onClose={() => setPoolOpen(false)}
+        >
+          {editor}
+        </PoolModal>
+      ) : editor}
+
     </>
   );
 }

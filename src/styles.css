@@ -198,25 +198,11 @@ body {
 }
 
 /* ---------- board ---------- */
-/* The board and the unassigned rail sit side by side, so a card can be dragged
-   straight out of the rail onto a day. The rail is not an overlay. */
 .workspace {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px 44px;
-}
-
-.pool-rail {
-  flex: 0 0 286px;
-  position: sticky;
-  top: 96px;
-  max-height: calc(100vh - 116px);
-  display: flex;
-}
-.pool-rail .column {
-  flex: 1;
-  max-height: none;
 }
 
 .board {
@@ -552,11 +538,16 @@ body {
   border-radius: 8px;
 }
 .drawer__actions {
+  position: sticky;
+  top: -18px;
+  z-index: 1;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
+  margin: -18px -18px 16px;
+  padding: max(18px, env(safe-area-inset-top)) 18px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
 }
 
 .field {
@@ -913,7 +904,7 @@ body {
   .board {
     display: block;
   }
-  .pool-rail {
+  .pool-modal {
     display: none;
   }
   .column {
@@ -994,3 +985,102 @@ body {
 .column__toggle:disabled { cursor: default; color: inherit; opacity: 1; }
 .saved-toolbar { margin-bottom: 16px; }
 .topbar__menu { display: inline-grid; place-items: center; }
+/* Unassigned places: fixed controls and a separately scrolling list. */
+.pool-modal {
+  width: min(640px, calc(100vw - 32px));
+  height: min(760px, calc(100dvh - 48px));
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.pool-modal::backdrop { background: rgba(20, 17, 14, 0.4); }
+.pool-modal__content { height: 100%; display: flex; flex-direction: column; }
+.pool-modal__content[hidden] { display: none; }
+.pool-modal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.pool-modal__head h2 { margin: 0; font-size: 20px; }
+.pool-modal__head p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.pool-modal__list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+.pool-modal__item { margin-bottom: 12px; }
+.pool-modal .card { cursor: default; }
+@media (max-width: 760px) {
+  .pool-modal { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
+  .pool-modal__head { padding-top: max(16px, env(safe-area-inset-top)); }
+  .pool-modal__list { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+/* Place selection and CSV import share the existing Hebrew / RTL dialog. */
+.pool-controls { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.pool-sections, .pool-search, .import-selection { display: flex; gap: 8px; flex-wrap: wrap; }
+.pool-sections { margin-bottom: 12px; }
+.pool-sections .chip { min-height: 40px; }
+.pool-sections .chip span { opacity: .65; margin-inline-start: 4px; }
+.pool-search input { flex: 1; min-width: 100px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: inherit; background: var(--panel); color: var(--ink); }
+.import-modal { width: min(760px, calc(100vw - 32px)); }
+.import-body { padding: 18px; }
+.import-upload { padding: 18px; border: 1px dashed var(--line); border-radius: 12px; background: var(--bg); }
+.import-upload p, .import-hint, .import-summary { font-size: 13px; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.import-upload input { max-width: 100%; }
+.import-bulk { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; padding-block: 10px; }
+.import-bulk .field { flex: 1; min-width: 130px; margin: 0; }
+.import-rows { display: grid; gap: 12px; }
+.import-row { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--panel); }
+.import-row__name { display: flex; align-items: center; gap: 10px; overflow-wrap: anywhere; }
+.import-row input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
+.import-note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; color: var(--muted); }
+.import-row a { font-size: 13px; display: inline-block; margin-top: 8px; }
+.import-row__fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.import-row__fields .field { margin: 0; min-width: 0; }
+.import-row--duplicate { background: var(--bg); }
+.import-badge { display: inline-block; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.import-footer { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+.import-footer p { margin: 0; font-size: 13px; }
+.import-error { color: #9e2828; background: #fff0ee; border-radius: 8px; padding: 12px; }
+.import-success { border: 1px solid #8bb596; border-radius: 12px; padding: 16px; line-height: 1.6; }
+.import-modal .btn:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 760px) {
+  .import-modal { width: 100%; }
+  .import-footer { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .import-selection { width: 100%; }
+  .pool-search input, .import-modal input { font-size: 16px; }
+}
+
+/* The place title is the keyboard-accessible edit action; no extra row needed. */
+.card__open {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.card__open:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+.pool-modal .card__body { cursor: pointer; }
+
+/* Manual driving estimates between scheduled places. */
+.driving-time { margin: 5px 0 10px; padding: 8px; border-inline-start: 2px dashed var(--line); color: var(--muted); font-size: 12px; }
+.driving-time label { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.driving-time input { width: 64px; min-height: 36px; padding: 5px; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; text-align: center; }
+.driving-time input[aria-invalid="true"] { border-color: var(--accent); }
+.driving-time [role="alert"] { display: block; margin-top: 5px; color: var(--accent); }
+.driving-total { margin: 0; padding: 8px 12px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+@media (max-width: 760px) { .driving-time input { min-height: 44px; font-size: 16px; } }
+
+.driving-time__controls { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.driving-time__map { min-height: 36px; font-size: 12px; text-decoration: none; }
+@media (max-width: 760px) { .driving-time__map { min-height: 44px; } }

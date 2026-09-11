@@ -13,7 +13,7 @@ const STATUS_TEXT: Record<SyncStatus, string> = {
 interface Props {
   status: SyncStatus;
   filtering: boolean;
-  /** Desktop only: how many places are still unassigned, and the rail toggle. */
+  /** Shortcut for the unassigned places modal on every screen size. */
   poolCount: number;
   poolOpen: boolean;
   onTogglePool: () => void;
@@ -55,16 +55,19 @@ export default function Header({
         </p>
       </div>
 
+      <button
+        type="button"
+        className={`btn btn--pool${poolOpen ? ' btn--pool-open' : ''}`}
+        aria-expanded={poolOpen}
+        aria-haspopup="dialog"
+        aria-controls="pool-modal"
+        onClick={onTogglePool}
+      >
+        טרם שובצו <span className="btn__count">{poolCount}</span>
+      </button>
+
       {/* Desktop shortcuts; on mobile these live in the menu sheet. */}
       <div className="topbar__actions">
-        <button
-          type="button"
-          className={`btn btn--pool${poolOpen ? ' btn--pool-open' : ''}`}
-          aria-expanded={poolOpen}
-          onClick={onTogglePool}
-        >
-          טרם שובצו <span className="btn__count">{poolCount}</span>
-        </button>
         {isHttpUrl(MAP_URL) && (
           <a className="btn" href={MAP_URL} target="_blank" rel="noopener noreferrer">
             🗺 המפה שלנו
