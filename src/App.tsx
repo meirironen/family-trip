@@ -58,7 +58,6 @@ export default function App() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [filter, setFilter] = useState<FilterState>({ area: null, type: null });
   const [activeCol, setActiveCol] = useState<ColumnId>(DAYS[0].id);
-  const [overview, setOverview] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => readJson(COLLAPSE_KEY, {}));
   const [poolOpen, setPoolOpen] = useState(false);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
@@ -106,7 +105,7 @@ export default function App() {
 
   const startNewPlace = () => {
     const place = newPlace();
-    update((s) => { const next = addPlace(s, place); return activeCol === POOL ? next : movePlace(next, place.id, activeCol); });
+    update((s) => addPlace(s, place));
     setOverlay(null);
     setEditing(place.id);
   };
@@ -127,7 +126,8 @@ export default function App() {
   const editingPlace = editing === null ? null : resolvePlace(state, editing);
 
   const dayColumns = COLUMNS.filter((c) => c.id !== POOL);
-  const boardColumns = overview ? dayColumns : dayColumns.filter((c) => c.id === activeCol);
+  // The pool opens separately; the board always shows scheduled days.
+  const boardColumns = isMobile ? dayColumns.filter((c) => c.id === activeCol) : dayColumns;
 
   const columnProps = {
     state: shown,
@@ -137,7 +137,6 @@ export default function App() {
     target,
     onOpen: openEditor,
     onRoute: setRouteDay,
-    onMove: (id: PlaceId, col: ColumnId) => update((s) => movePlace(s, id, col)),
     onToggleCollapse: toggleCollapse,
     onToggleDone: (id: PlaceId) => update((s) => toggleDone(s, id)),
     onSetDayArea: (day: ColumnId, area: string | null) => update((s) => setDayArea(s, day, area)),
@@ -176,25 +175,17 @@ export default function App() {
         onInstall={install}
       />
 
-      <div className="trip-navigation">
-        <DayTabs state={state} active={overview ? null : activeCol} today={today} onSelect={(id) => { if (id === POOL) { setPoolOpen(true); return; } setActiveCol(id); setOverview(false); }} />
-        <button className={`btn${overview ? ' btn--primary' : ''}`} aria-pressed={overview} onClick={() => setOverview((v) => !v)}>מבט על הטיול</button>
-      </div>
-      <div className="view-heading"><div><p className="eyebrow">צפון איטליה · 22–30 בספטמבר</p><h2>{overview ? 'כל הטיול, במקום אחד' : activeCol === POOL ? 'רעיונות לטיול' : 'היום שלכם, בקצב שלכם'}</h2></div>
-        <button className="btn" onClick={() => setPoolOpen(true)}>מקומות שמורים · {state.order[POOL].length}</button>
-      </div>
+      {isMobile && <DayTabs state={shown} active={activeCol} today={today} onSelect={setActiveCol} />}
 
-      <div className={`workspace${!overview ? ' workspace--focused' : ''}`}>
-        <main className={`board${!overview ? ' board--focused' : ''}`}>
+      <div className="workspace">
+        <main className={`board${isMobile ? ' board--single' : ''}`}>
           {boardColumns.map((column) => (
             <Column
               {...columnProps}
               key={column.id}
               column={column}
               isToday={column.id === today}
-              collapsed={overview && collapsed[column.id] === true}
-              focused={!overview}
-              onAddPlace={startNewPlace}
+              collapsed={!isMobile && collapsed[column.id] === true}
               dayArea={state.dayAreas[column.id]}
             />
           ))}

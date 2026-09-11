@@ -3,7 +3,7 @@ import { COLUMNS, POOL, type ColumnId, type DayId } from '../trip.ts';
 
 interface Props {
   state: TripState;
-  active: ColumnId | null;
+  active: ColumnId;
   today: DayId | null;
   onSelect: (id: ColumnId) => void;
 }

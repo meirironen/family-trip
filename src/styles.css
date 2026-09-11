@@ -937,54 +937,6 @@ body {
 .day-route__stops { padding-inline-start: 24px; line-height: 1.9; }
 .day-route__links { display: flex; flex-direction: column; gap: 10px; }
 
-/* Day-focused planning, with an optional whole-trip overview. */
-.trip-navigation { display: flex; align-items: center; gap: 16px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
-.trip-navigation .daytabs { display: flex; position: static; flex: 1; min-width: 0; padding: 0; border: 0; background: none; }
-.trip-navigation > .btn { flex-shrink: 0; }
-.view-heading { max-width: 1320px; margin: 28px auto 8px; padding: 0 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-.view-heading h2 { font-size: clamp(22px, 3vw, 32px); margin: 4px 0; letter-spacing: -.7px; }
-.eyebrow { color: var(--muted); font-size: 12px; margin: 0; }
-.workspace--focused { max-width: 1320px; margin: auto; gap: 28px; padding: 16px 24px 70px; }
-.board--focused { display: block; }
-.column--focused { max-height: none; padding: 16px; box-shadow: none; }
-.column--focused .column__head { padding: 6px 8px 18px; }
-.column--focused .column__title { font-size: 24px; }
-.column--focused .column__list { overflow: visible; padding: 22px 0; gap: 16px; }
-.column--focused .column__sub { font-size: 14px; margin-top: 6px; }
-.day-settings { margin: 10px 12px; color: var(--muted); font-size: 13px; }
-.day-settings summary { cursor: pointer; padding: 6px 0; }
-.day-hotel-summary { margin: 8px; }
-.itinerary-stop { position: relative; }
-.column--focused .itinerary-stop { padding-inline-start: 38px; }
-.stop-number { position: absolute; inset-inline-start: 0; top: 18px; width: 26px; height: 26px; border-radius: 50%; background: var(--bg); color: var(--accent); text-align: center; font-weight: 700; line-height: 26px; }
-.column--focused .card { padding: 18px; box-shadow: none; }
-.column--focused .card__title { font-size: 18px; }
-.card__notes { margin: 10px 0; color: var(--muted); font-size: 13px; white-space: pre-line; }
-.card__tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 12px; }
-.card__edit, .card__tools select { background: transparent; color: var(--accent); border: 0; font: inherit; font-size: 12px; cursor: pointer; padding: 3px 0; max-width: 100%; }
-.add-stop { padding: 18px; border: 1px dashed var(--line); background: var(--bg); color: var(--accent); border-radius: 10px; cursor: pointer; font: inherit; }
-.saved-panel { width: 100%; min-width: 0; }
-.saved-panel > h2 { font-size: 18px; margin: 4px 0; }
-.saved-panel > p { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
-.saved-search { width: 100%; padding: 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); font: inherit; margin-bottom: 12px; }
-.saved-panel > .btn { margin-bottom: 16px; }
-.saved-panel .column__head { display: none; }
-.saved-panel .column__list { max-height: calc(100vh - 350px); }
-.workspace--focused .pool-rail { flex-basis: 310px; order: 2; top: 90px; }
-@media (max-width: 700px) {
-  .trip-navigation { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
-  .trip-navigation .daytabs { flex-basis: 100%; }
-  .view-heading { margin-top: 18px; padding: 0 14px; }
-  .view-heading > .btn { display: none; }
-  .workspace--focused { padding: 12px 10px 90px; }
-  .column--focused { padding: 10px; }
-  .column--focused .card { padding: 12px; }
-  .column--focused .card__title { font-size: 16px; }
-  .column--focused .itinerary-stop { padding-inline-start: 30px; }
-}
-.column__toggle:disabled { cursor: default; color: inherit; opacity: 1; }
-.saved-toolbar { margin-bottom: 16px; }
-.topbar__menu { display: inline-grid; place-items: center; }
 /* Unassigned places: fixed controls and a separately scrolling list. */
 .pool-modal {
   width: min(640px, calc(100vw - 32px));
