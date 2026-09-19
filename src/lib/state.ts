@@ -196,11 +196,18 @@ export function toggleDone(state: TripState, id: PlaceId): TripState {
   return { ...state, done };
 }
 
-export function addPlace(state: TripState, place: Place): TripState {
+/**
+ * Files a new place straight into `column`. The pool is a backlog, so new
+ * ideas go on top; a day is an itinerary, so a new stop joins the end.
+ */
+export function addPlace(state: TripState, place: Place, column: ColumnId = POOL): TripState {
+  const col = COLUMN_IDS.includes(column) ? column : POOL;
+  const target = state.order[col] ?? [];
+
   return {
     ...state,
     custom: [...state.custom, place],
-    order: { ...state.order, [POOL]: [place.id, ...state.order[POOL]] },
+    order: { ...state.order, [col]: col === POOL ? [place.id, ...target] : [...target, place.id] },
   };
 }
 

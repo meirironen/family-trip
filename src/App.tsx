@@ -103,10 +103,15 @@ export default function App() {
     setEditing(id);
   };
 
-  const startNewPlace = () => {
+  /**
+   * Creates a place straight in `target` when given — e.g. the day whose
+   * "+" was pressed — otherwise falls back to טרם שובצו as before.
+   */
+  const startNewPlace = (target?: ColumnId) => {
     const place = newPlace();
-    update((s) => addPlace(s, place));
+    update((s) => addPlace(s, place, target ?? POOL));
     setOverlay(null);
+    if (target && target !== POOL) setActiveCol(target);
     setEditing(place.id);
   };
 
@@ -169,7 +174,7 @@ export default function App() {
         poolOpen={poolOpen}
         onTogglePool={togglePool}
         onOpenMenu={() => setOverlay('menu')}
-        onAddPlace={startNewPlace}
+        onAddPlace={() => startNewPlace()}
         onManageAreas={() => setOverlay('areas')}
         canInstall={installEvent !== null}
         onInstall={install}
@@ -187,13 +192,14 @@ export default function App() {
               isToday={column.id === today}
               collapsed={!isMobile && collapsed[column.id] === true}
               dayArea={state.dayAreas[column.id]}
+              onAddPlace={startNewPlace}
             />
           ))}
         </main>
       </div>
 
       {isMobile && (
-        <button type="button" className="fab" aria-label="הוספת מקום" onClick={startNewPlace}>
+        <button type="button" className="fab" aria-label="הוספת מקום" onClick={() => startNewPlace(activeCol)}>
           ＋
         </button>
       )}
@@ -209,7 +215,7 @@ export default function App() {
           filter={filter}
           onFilter={setFilter}
           onImport={() => setOverlay('import')}
-          onAddPlace={startNewPlace}
+          onAddPlace={() => startNewPlace()}
           onManageAreas={() => setOverlay('areas')}
           canInstall={installEvent !== null}
           onInstall={install}

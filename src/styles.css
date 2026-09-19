@@ -406,6 +406,21 @@ body {
   text-decoration: none;
 }
 
+.add-stop {
+  padding: 9px 12px;
+  margin: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.add-stop:hover {
+  border-color: var(--accent);
+}
+
 /* ---------- card ---------- */
 .card {
   position: relative;
