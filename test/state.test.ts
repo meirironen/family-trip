@@ -97,6 +97,30 @@ test('a custom place can be added and removed for good', () => {
   assert.equal(normalize(s).order[POOL].includes(p.id), false, 'stays removed after normalize');
 });
 
+test('a place can be created straight into a day, at the end of it', () => {
+  const first = newPlace();
+  const second = newPlace();
+
+  let s = addPlace(emptyState(), first, 'd3');
+  s = addPlace(s, second, 'd3');
+
+  assert.deepEqual(s.order.d3, [first.id, second.id], 'a new stop joins the end of the day');
+  assert.equal(s.order[POOL].includes(first.id), false, 'it never passes through the pool');
+  assert.equal(columnOf(s, second.id), 'd3');
+});
+
+test('a place created in a day survives a JSON round trip', () => {
+  const p = newPlace();
+  const restored = normalize(JSON.parse(JSON.stringify(addPlace(emptyState(), p, 'd5'))));
+  assert.equal(columnOf(restored, p.id), 'd5');
+});
+
+test('addPlace falls back to the pool for an unknown column', () => {
+  const p = newPlace();
+  const s = addPlace(emptyState(), p, 'nope' as 'd1');
+  assert.equal(s.order[POOL][0], p.id);
+});
+
 test('maps link falls back to a search and refuses a hostile url', () => {
   assert.match(mapsUrl({ he: 'ורונה', orig: 'Verona' }), /maps\/search.*Verona/);
   assert.ok(

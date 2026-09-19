@@ -26,6 +26,8 @@ interface Props {
   onRoute: (id: ColumnId) => void;
   onOpen: (id: PlaceId) => void;
   onToggleDone: (id: PlaceId) => void;
+  /** Creates a new place straight in this day, skipping טרם שובצו. */
+  onAddPlace?: (col: ColumnId) => void;
   /** Which area this day is based in, and how to change it. */
   dayArea?: AreaId | undefined;
   onSetDayArea?: (day: ColumnId, area: AreaId | null) => void;
@@ -46,6 +48,7 @@ export default function Column({
   onOpen,
   onRoute,
   onToggleDone,
+  onAddPlace,
   dayArea,
   onSetDayArea,
   onSetDayNote,
@@ -180,6 +183,11 @@ export default function Column({
 
           {dropAt !== null && dropAt >= ids.length && <div className="drop-line" aria-hidden="true" />}
         </div>
+      )}
+      {!collapsed && isDay && onAddPlace && (
+        <button type="button" className="add-stop" onClick={() => onAddPlace(column.id)}>
+          ＋ הוספת מקום ל{column.title}
+        </button>
       )}
     </section>
   );
